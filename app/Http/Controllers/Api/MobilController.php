@@ -1,0 +1,83 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Http\Resources\MobilResource;
+use App\Models\Mobil;
+use Illuminate\Http\Request;
+
+class MobilController extends Controller
+{
+    public function index()
+    {
+        $mobils = Mobil::orderBy('id', 'desc')->get();
+
+        return MobilResource::collection($mobils)
+            ->additional([
+                'message' => 'Daftar mobil berhasil diambil'
+            ]);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'nama' => 'required|string|max:100',
+            'brand' => 'required|string|max:100',
+            'harga' => 'required|integer|min:0',
+            'tahun' => 'required|integer|min:1900|max:2100',
+            'transmisi' => 'required|in:Manual,Matic,CVT',
+            'bahan_bakar' => 'required|in:Bensin,Diesel,Hybrid,Listrik',
+            'status' => 'sometimes|in:tersedia,sold',
+            'foto' => 'nullable|url|max:2048',
+        ]);
+
+        $mobil = Mobil::create($validated);
+
+        return (new MobilResource($mobil))
+            ->additional([
+                'message' => 'Data mobil berhasil ditambahkan'
+            ])
+            ->response()
+            ->setStatusCode(201);
+    }
+
+    public function show(Mobil $mobil)
+    {
+        return (new MobilResource($mobil))
+            ->additional([
+                'message' => 'Detail mobil berhasil diambil'
+            ]);
+    }
+
+    public function update(Request $request, Mobil $mobil)
+    {
+        $validated = $request->validate([
+            'nama' => 'sometimes|required|string|max:100',
+            'brand' => 'sometimes|required|string|max:100',
+            'harga' => 'sometimes|required|integer|min:0',
+            'tahun' => 'sometimes|required|integer|min:1900|max:2100',
+            'transmisi' => 'sometimes|required|in:Manual,Matic,CVT',
+            'bahan_bakar' => 'sometimes|required|in:Bensin,Diesel,Hybrid,Listrik',
+            'status' => 'sometimes|required|in:tersedia,sold',
+            'foto' => 'sometimes|nullable|url|max:2048',
+        ]);
+
+        $mobil->update($validated);
+
+        return (new MobilResource($mobil))
+            ->additional([
+                'message' => 'Data mobil berhasil diperbarui'
+            ]);
+    }
+
+    public function destroy(Mobil $mobil)
+    {
+        $mobil->delete();
+
+        return response()->json([
+            'message' => 'Data mobil berhasil dihapus',
+            'data' => null
+        ], 200);
+    }
+}
